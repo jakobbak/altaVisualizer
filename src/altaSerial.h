@@ -1,5 +1,5 @@
 //
-//  altaSerial.h
+//  AltaSerial.h
 //  altaVisualizer
 //
 //  Created by Jakob Bak on 30/03/16.
@@ -14,7 +14,7 @@
 #include "ofApp.h"
 #include "Views.h"
 
-class altaSerial : public ofThread {
+class AltaSerial : public ofThread {
     
 public:
     void init();

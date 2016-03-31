@@ -92,7 +92,6 @@ void ViewTextBox::draw() {
         float ttf_height_offset = font.stringHeight("abcdefghijklmnopqrstuvwyxz0123456789"); // all letters and digits to make sure the proper ascenders and descenders are taken into account
         float ttf_title_height_offset = title_font.stringHeight(title);
         float title_margin = (ttf_title_height_offset > 0 ? 5 : 0);
-//        if(title == "") ttf_title_height_offset = 0;
         font.drawString(text, xulc + text_x, yulc + ttf_height_offset + ttf_title_height_offset + title_margin + text_y);
     }
     else ofDrawBitmapString(text, xulc + text_x, yulc + 10 + text_y);
@@ -125,8 +124,8 @@ ViewGraph2D::ViewGraph2D(ofVec2f upperLeftCorner, ofVec2f size, std::vector<ofVe
         if(data_point.y > ymax) ymax = data_point.y;
         data.push_back(data_point);
         
-        //        cout << "x=" << dataPoint.x << " \t";
-        //        cout << "y=" << dataPoint.y << endl;
+//        cout << "x=" << dataPoint.x << " \t";
+//        cout << "y=" << dataPoint.y << endl;
     }
     float xrange = xmax - xmin;
     float yrange = ymax - ymin;

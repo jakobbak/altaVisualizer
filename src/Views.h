@@ -187,11 +187,6 @@ class ViewRealtimePlotter2D : public View {
         ofColor axis_color;
         float line_width;
         
-        //        std::vector<float> x_unit_values;
-        //        std::vector<float> y_unit_values;
-        //        int xprecision;
-        //        int yprecision;
-        
         ofTrueTypeFont text_font;
         int text_font_size;
         string text_font_name;

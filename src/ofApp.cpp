@@ -1,17 +1,13 @@
 #include <stdio.h>
 #include <string.h>
+//#include "ofxWatchFile.h"
+#include "gdbMemoryDump.h"
+#include "Views.h"
 #include "ofApp.h"
-//#include <ofSerial.h>
-#include "altaSerial.h"
-
-//ofSerial serial;
+#include "AltaSerial.h"
 
 gdbMemoryDump dump;
 string dumpFileName = "flash_sector_11";
-
-//vector<ofVec2f> axisTable;
-//vector<ofVec2f> phaseReference;
-//vector<ofVec2f> models;
 
 vector<ofVec2f> data_arm_phase_reference;
 vector<ofVec2f> data_platter_phase_reference;
@@ -20,9 +16,6 @@ vector<ofVec2f> data_platter_axis_table_nominals;
 vector<ofVec2f> data_arm_ecm;
 vector<ofVec2f> data_platter_ecm;
 string runtime_config_info;
-
-ofFile random_file;
-string random_text;
 
 ViewGraph2D view_arm_phase_reference;
 ViewGraph2D view_platter_phase_reference;
@@ -34,7 +27,8 @@ ViewRealtimePlotter2D view_realtime_plotter;
 
 ViewTextBox view_config_info;
 
-altaSerial alta;
+AltaSerial alta;
+
 
 //--------------------------------------------------------------
 void ofApp::setup(){
@@ -51,18 +45,11 @@ void ofApp::setup(){
     alta.init();
     alta.startThread();
     
-//    serial.listDevices();
-//    vector <ofSerialDeviceInfo> deviceList = serial.getDeviceList();
-//    serial.setup(0, 115200); //open the first device and talk to it at 57600 baud
-//    
-//    linebuffer = "";
-
 }
 
 
 //--------------------------------------------------------------
 void ofApp::update(){
-//    checkSerial();
 
 }
 
@@ -70,7 +57,6 @@ void ofApp::update(){
 //--------------------------------------------------------------
 void ofApp::draw(){
 
-//    ofDrawBitmapStringHighlight("Everything is cool - stay tuned!", 20, 20);
     view_arm_phase_reference.draw();
     view_platter_phase_reference.draw();
     view_arm_axis_table_nominals.draw();
@@ -102,9 +88,6 @@ void ofApp::setupViews(){
     
     view_realtime_plotter.setGraphsCentered(true);
     
-//    random_file.open(ofToDataPath("random.txt"), ofFile::ReadOnly, false);
-//    ofBuffer random_buff = random_file.readToBuffer();
-//    random_text = random_buff.getText();
 }
 
 
@@ -211,95 +194,6 @@ void ofApp::getRuntimeConfigAsString() {
     runtime_config_info = buff.str();
 //    cout << runtime_config_info << endl;
     
-}
-
-
-
-//void ofApp::checkSerial() {
-//    stringstream inbuffer;
-//    inbuffer << linebuffer;
-//    while(serial.available()) {
-//        char in_char;
-//        in_char = serial.readByte();
-//        if(in_char == '\r') continue;
-//        if(in_char == OF_SERIAL_NO_DATA) {
-//            cout << "no data was read" << endl;
-//            return;
-//        } else if(in_char == OF_SERIAL_ERROR) {
-//            cout << "an error occurred" << endl;
-//            return;
-//        } else {
-//            inbuffer << in_char;
-//        }
-//    }
-//    if(!inbuffer.str().empty()) {
-//        string newline = inbuffer.str();
-//        vector<string> newlines = ofSplitString(newline, "\n", false, false);
-//        int nindex;
-//        int numlines = newlines.size();
-//        for(int i=0; i < numlines-1; i++) {
-//            // parse the line here
-//            parseSerial(newlines[i]);
-////            cout << "[" << i << "] " << newlines[i] << endl;
-////            nindex = i;
-//        }
-//        
-//        linebuffer = newlines[numlines-1];
-////        cout << "nindex is " << nindex << endl;
-////        cout << "remaining text is: " << linebuffer << endl;
-//        inbuffer.str("");
-//    }
-//    
-//}
-//
-//void ofApp::parseSerial(string line) {
-//    if(ofIsStringInString(line, "_DEBUG")) {
-//        vector<string> debug_msg = ofSplitString(line, "@");
-//        int debugID = getDebugMessageType(debug_msg[0]);
-//        switch(debugID) {
-//            case 0:
-//            {
-//                vector<string> runtime_value = ofSplitString(debug_msg[1], " ");
-//                for(int i=0; i < runtime_value.size(); i++) {
-////                    cout << "[" << i << "]" << runtime_value[i] << endl;
-//                }
-//                string label = runtime_value[0];
-//                float value;
-//                try {
-//                    value = stof(runtime_value[1]);
-//                } catch (invalid_argument ia) {
-//                    break;
-//                }
-//                view_realtime_plotter.addDataPoint(label, value);
-////                cout << label << "=" << defaultfloat << setprecision(5) << value << endl;
-//            }
-//                break;
-//            case 1:
-//                break;
-//            default:
-//                break;
-//        }
-//        
-//    } else {
-//        cout << line << endl;
-//    }
-//}
-//
-//int ofApp::getDebugMessageType(string debugID) {
-//    if(debugID == "_DEBUG_") return 0;
-//    else return 0;
-//}
-//
-//
-//
-
-
-
-void ofApp::addClickableArea(ofVec2f ulc, ofVec2f size, void (*func_cb)(void)) {
-    clickableArea_t area;
-    area.ulc = ulc;
-    area.size = size;
-    clickable_areas.push_back(area);
 }
 
 
