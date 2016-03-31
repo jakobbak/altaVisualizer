@@ -8,7 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		3620B3331C99B87B001F7381 /* gdbMemoryDump.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3620B3311C99B87B001F7381 /* gdbMemoryDump.cpp */; };
-		362B0DB11CABF4F200192458 /* CheckSerial.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 362B0DAF1CABF4F200192458 /* CheckSerial.cpp */; };
+		362B0DB11CABF4F200192458 /* altaSerial.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 362B0DAF1CABF4F200192458 /* altaSerial.cpp */; };
 		36ECDC251C9D915A0089F459 /* Views.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 36ECDC231C9D915A0089F459 /* Views.cpp */; };
 		75AD5110108C83CC25DD4FFA /* ofxWatchFile.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 678871D2EDBC56000965682D /* ofxWatchFile.cpp */; };
 		E4328149138ABC9F0047C5CB /* openFrameworksDebug.a in Frameworks */ = {isa = PBXBuildFile; fileRef = E4328148138ABC890047C5CB /* openFrameworksDebug.a */; };
@@ -49,8 +49,8 @@
 		0703D8ADDE2CB2E0A71D076A /* ofxWatchFile.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 30; name = ofxWatchFile.h; path = ../../../addons/ofxWatchFile/src/ofxWatchFile.h; sourceTree = SOURCE_ROOT; };
 		3620B3311C99B87B001F7381 /* gdbMemoryDump.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = gdbMemoryDump.cpp; sourceTree = "<group>"; };
 		3620B3321C99B87B001F7381 /* gdbMemoryDump.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = gdbMemoryDump.h; sourceTree = "<group>"; };
-		362B0DAF1CABF4F200192458 /* CheckSerial.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = CheckSerial.cpp; sourceTree = "<group>"; };
-		362B0DB01CABF4F200192458 /* CheckSerial.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CheckSerial.h; sourceTree = "<group>"; };
+		362B0DAF1CABF4F200192458 /* altaSerial.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = altaSerial.cpp; sourceTree = "<group>"; };
+		362B0DB01CABF4F200192458 /* altaSerial.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = altaSerial.h; sourceTree = "<group>"; };
 		36ECDC231C9D915A0089F459 /* Views.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Views.cpp; sourceTree = "<group>"; wrapsLines = 0; };
 		36ECDC241C9D915A0089F459 /* Views.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Views.h; sourceTree = "<group>"; wrapsLines = 0; };
 		678871D2EDBC56000965682D /* ofxWatchFile.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 30; name = ofxWatchFile.cpp; path = ../../../addons/ofxWatchFile/src/ofxWatchFile.cpp; sourceTree = SOURCE_ROOT; };
@@ -130,8 +130,8 @@
 				3620B3321C99B87B001F7381 /* gdbMemoryDump.h */,
 				36ECDC231C9D915A0089F459 /* Views.cpp */,
 				36ECDC241C9D915A0089F459 /* Views.h */,
-				362B0DAF1CABF4F200192458 /* CheckSerial.cpp */,
-				362B0DB01CABF4F200192458 /* CheckSerial.h */,
+				362B0DAF1CABF4F200192458 /* altaSerial.cpp */,
+				362B0DB01CABF4F200192458 /* altaSerial.h */,
 			);
 			path = src;
 			sourceTree = SOURCE_ROOT;
@@ -241,7 +241,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				362B0DB11CABF4F200192458 /* CheckSerial.cpp in Sources */,
+				362B0DB11CABF4F200192458 /* altaSerial.cpp in Sources */,
 				36ECDC251C9D915A0089F459 /* Views.cpp in Sources */,
 				E4B69E200A3A1BDC003C02F2 /* main.cpp in Sources */,
 				E4B69E210A3A1BDC003C02F2 /* ofApp.cpp in Sources */,

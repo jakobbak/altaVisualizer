@@ -5,6 +5,7 @@
 #include "gdbMemoryDump.h"
 #include "Views.h"
 
+
 class ofApp : public ofBaseApp{
     
     typedef struct {
@@ -43,7 +44,7 @@ class ofApp : public ofBaseApp{
 		void gotMessage(ofMessage msg);
     
     private:
-        string linebuffer;
+//        string linebuffer;
         vector<clickableArea_t> clickable_areas;
 		
 };
