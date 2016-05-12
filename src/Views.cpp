@@ -98,6 +98,7 @@ void ViewTextBox::draw() {
 
 }
 
+
 ViewGraph2D::ViewGraph2D(ofVec2f upperLeftCorner, ofVec2f size, std::vector<ofVec2f> data_set, plot2D_type type, string title)
     : View(upperLeftCorner, size, title)
 {
@@ -124,8 +125,9 @@ ViewGraph2D::ViewGraph2D(ofVec2f upperLeftCorner, ofVec2f size, std::vector<ofVe
         if(data_point.y > ymax) ymax = data_point.y;
         data.push_back(data_point);
         
-//        cout << "x=" << dataPoint.x << " \t";
-//        cout << "y=" << dataPoint.y << endl;
+//        cout << fixed << setprecision(2);
+//        cout << "x=" << data_point.x << " \t";
+//        cout << "y=" << data_point.y << endl;
     }
     float xrange = xmax - xmin;
     float yrange = ymax - ymin;
@@ -442,10 +444,18 @@ void ViewRealtimePlotter2D::updateGraph() {
             graph[value_type].push_back(ofVec2f(graph_time, value));
         }
         if(realtime_plotter_config.centered) {
-            if(fabsf(min) > fabsf(max)) max = sgn(max) * fabsf(min);
-            else if(fabsf(max) > fabsf(min) && min < 0) min = sgn(min) * fabsf(max);
-            else if(fabsf(max) > fabsf(min) && min == 0) min = 0;
-            // maybe a condition when min > 0 ?
+//            if(fabsf(max) > fabsf(min) && min >= 0) min = -max;
+            if(fabsf(max) > fabsf(min) && min < 0) min = -max;
+
+//            if(fabsf(min) > fabsf(max) && max <= 0) max = -min;
+            if(fabsf(min) > fabsf(max) && max > 0) max = -min;
+            if(max == min && max > 0) min = 0;
+            if(max == min && max < 0) max = 0;
+            if(max == 0 && min == 0) {
+                max = 1;
+                min = -1;
+            }
+            
         }
         realtime_plotter_config.min[value_type] = min;
         realtime_plotter_config.max[value_type] = max;
@@ -507,5 +517,301 @@ void ViewRealtimePlotter2D::toggleGraphVisibility(int value_type) {
 
 
 
+ViewGraph3D::ViewGraph3D(ofVec2f upperLeftCorner, ofVec2f size, std::vector<vector<ofVec3f>> data_set, plot3D_type type, string title)
+: View(upperLeftCorner, size, title)
+{
+    graph3D_config.type = type;
+    
+    graph3D_config.graph_color = ofColor(255, 255, 255);
+    graph3D_config.axis_color = ofColor(255, 255, 255);
+    graph3D_config.circle_radius = 1;
+    graph3D_config.line_width = 1;
+    graph3D_config.text_font_name = view_config.font_name;
+    graph3D_config.text_font_size = view_config.font_size;
+    graph3D_config.text_using_ttf = graph3D_config.text_font.load(graph3D_config.text_font_name, graph3D_config.text_font_size);
+    
+    float xmin = data_set[0][0].x;
+    float xmax = data_set[0][0].x;
+    float ymin = data_set[0][0].y;
+    float ymax = data_set[0][0].y;
+    float zmin = data_set[0][0].z;
+    float zmax = data_set[0][0].z;
+    
+    for(int i=0; i < data_set.size(); i++) {
+        data.push_back(vector<ofVec3f>{});
+        for(int cnt=0; cnt < data_set[i].size(); cnt++) {
+            ofVec3f data_point = data_set[i][cnt];
+            if(data_point.x < xmin) xmin = data_point.x;
+            if(data_point.x > xmax) xmax = data_point.x;
+            if(data_point.y < ymin) ymin = data_point.y;
+            if(data_point.y > ymax) ymax = data_point.y;
+            if(data_point.z < zmin) zmin = data_point.z;
+            if(data_point.z > zmax) zmax = data_point.z;
+            data[i].push_back(data_point);
+            
+            //        cout << fixed << setprecision(2);
+            //        cout << "x=" << data_point.x << " \t";
+            //        cout << "y=" << data_point.y << endl;
+        }
+    }
+    float xrange = xmax - xmin;
+    float yrange = ymax - ymin;
+    float zrange = zmax - zmin;
+    
+    cout << "Graph " << title << ":" << endl;
+    cout << "xmin=" << xmin << endl;
+    cout << "xmax=" << xmax << endl;
+    cout << "ymin=" << ymin << endl;
+    cout << "ymax=" << ymax << endl;
+    cout << "xrange=" << xrange << endl;
+    cout << "yrange=" << yrange << endl;
+    
+    if(xrange == 0) {
+        //        xrange = 1;
+        cout << "For " << title << " xrange was 0, setting it to 1 to avoid division by zero" << endl;
+    }
+    if(yrange == 0) {
+        //        yrange = 1;
+        cout << "For " << title << " yrange was 0, setting it to 1 to avoid division by zero" << endl;
+    }
+    if(zrange == 0) {
+        //        yrange = 1;
+        cout << "For " << title << " zrange was 0, setting it to 1 to avoid division by zero" << endl;
+    }
+    
+    graph3D_config.xmin = xmin;
+    graph3D_config.xmax = xmax;
+    graph3D_config.ymin = ymin;
+    graph3D_config.ymax = ymax;
+    graph3D_config.zmin = zmin;
+    graph3D_config.zmax = zmax;
+    
+    graph3D_config.xrange = xrange;
+    graph3D_config.yrange = yrange;
+    graph3D_config.zrange = zrange;
+    
+    cout << "Unit Values: " << endl;
+    if(xrange != 0) getUnitLines(&graph3D_config.x_unit_values, &graph3D_config.xprecision, xmin, xmax);
+    if(yrange != 0) getUnitLines(&graph3D_config.y_unit_values, &graph3D_config.yprecision, ymin, ymax);
+    if(zrange != 0) getUnitLines(&graph3D_config.z_unit_values, &graph3D_config.zprecision, zmin, zmax);
+    cout << endl;
+    
+}
 
+
+void ViewGraph3D::draw()
+{
+    View::draw();
+    float xulc = view_config.position.x;
+    float yulc = view_config.position.y;
+    float width = view_config.size.x;
+    float height = view_config.size.y;
+    
+    plot3D_type type = graph3D_config.type;
+    float xmin = graph3D_config.xmin;
+    float xmax = graph3D_config.xmax;
+    float ymin = graph3D_config.ymin;
+    float ymax = graph3D_config.ymax;
+    float xrange = graph3D_config.xrange;
+    float yrange = graph3D_config.yrange;
+    ofColor graph_color = graph3D_config.graph_color;
+    ofColor axis_color = graph3D_config.axis_color;
+    float line_width = graph3D_config.line_width;
+    float circle_radius = graph3D_config.circle_radius;
+    std::vector<float> x_axis_units = graph3D_config.x_unit_values; // <------
+    std::vector<float> y_axis_units = graph3D_config.y_unit_values; // <------
+    int xprecision = graph3D_config.xprecision;
+    int yprecision = graph3D_config.yprecision;
+    bool using_truetypefont = graph3D_config.text_using_ttf; // <-------------
+    ofTrueTypeFont font = graph3D_config.text_font;
+    
+    // Prepare variables for unit lines and axes
+    float xpos_multiplier = width / xrange;
+    float ypos_multiplier = height / yrange;
+    float xpos_offset = -xmin * xpos_multiplier;
+    float ypos_offset = ymin * ypos_multiplier;
+    
+    float x_axis_x0 = xulc;
+    float x_axis_x1 = xulc + width;
+    float x_axis_y = yulc + ypos_offset + height;
+    float y_axis_y0 = yulc + height;
+    float y_axis_y1 = yulc;
+    float y_axis_x = xulc + xpos_offset;
+    
+    // Draw unit lines
+    ofSetColor(axis_color * 0.4);
+    for(int i=0; i < x_axis_units.size(); i++) {
+        float x_unit_x = xulc + xpos_offset + (x_axis_units[i] * xpos_multiplier);
+        ofDrawLine(x_unit_x, y_axis_y0, x_unit_x, y_axis_y1);
+    }
+    for(int i=0; i < y_axis_units.size(); i++) {
+        float y_unit_y = yulc + ypos_offset + (height - (y_axis_units[i] * ypos_multiplier));
+        ofDrawLine(x_axis_x0, y_unit_y, x_axis_x1, y_unit_y);
+    }
+    
+    // Draw unit digits
+    if(using_truetypefont) {
+        for(int i=0; i < y_axis_units.size(); i++) {
+            if(yprecision < 0) yprecision = 0;
+            stringstream unit_float;
+            unit_float << fixed << setprecision(yprecision) << y_axis_units[i];
+            string unit_value = unit_float.str();
+            //            string unit_value = to_string(float(y_axis_units[i]));
+            float text_height = font.stringHeight(unit_value);
+            float text_width = font.stringWidth(unit_value);
+            float unit_xpos = xulc + xpos_offset + 5;
+            float unit_ypos = yulc - 5 + ypos_offset + (height - (y_axis_units[i] * ypos_multiplier));
+            if(unit_xpos > xulc + width - text_width - 5) {
+                unit_xpos = xulc + width - text_width -5;
+                if(unit_value == "0") unit_value = "";
+            }
+            if(unit_xpos < xulc + 5) {
+                unit_xpos = xulc + 5;
+                if(unit_value == "0") unit_value = "";
+            }
+            if(unit_ypos < yulc + text_height + 5) continue;
+            if(unit_ypos > yulc + height - 5) continue;
+            font.drawString(unit_value, unit_xpos, unit_ypos);
+        }
+        for(int i=0; i < x_axis_units.size(); i++) {
+            if(xprecision < 0) xprecision = 0;
+            stringstream unit_float;
+            unit_float << fixed << setprecision(xprecision) << x_axis_units[i];
+            string unit_value = unit_float.str();
+//            string unit_value = to_string(int(x_axis_units[i]));
+            float text_height = font.stringHeight(unit_value);
+            float text_width = font.stringWidth(unit_value);
+            float unit_xpos = xulc + xpos_offset + 5 + (x_axis_units[i] * xpos_multiplier);
+            float unit_ypos = yulc + ypos_offset + height - 5;
+            if(unit_ypos < yulc + text_height + 5) {
+                unit_ypos = yulc + text_height + 5;
+                if(unit_value == "0") unit_value = "";
+            }
+            if(unit_ypos > yulc + height - 5) {
+                unit_ypos = yulc + height - 5;
+                if(unit_value == "0") unit_value = "";
+            }
+            if(unit_xpos > xulc + width - text_width - 5) continue;
+            if(unit_xpos < xulc + 5) continue;
+            font.drawString(unit_value, unit_xpos, unit_ypos);
+        }
+//        cout << fixed << setprecision(4);
+    } else {
+        cout << "No TrueTypeFont loaded - couldn't write unit text on axes." << endl;
+    }
+    
+    // Draw axes
+    ofSetColor(axis_color);
+    if(x_axis_y >= yulc && x_axis_y <= yulc + height) {
+        ofDrawLine(x_axis_x0, x_axis_y, x_axis_x1, x_axis_y);
+    }
+    if(y_axis_x >= xulc && y_axis_x <= xulc + width) {
+        ofDrawLine(y_axis_x, y_axis_y0, y_axis_x, y_axis_y1);
+    }
+    
+    for(int i=0; i<data.size(); i++) {
+        float alpha = graph3D_config.curveFittingParameters[i].x;
+        float beta = graph3D_config.curveFittingParameters[i].y;
+        float gamma = graph3D_config.curveFittingParameters[i].z;
+        for(int j=0; j<data[i].size(); j++) {
+            ofSetColor(graph_color);
+            float x1 = xulc + xpos_offset + (data[i][j].x * xpos_multiplier);
+            float y1 = yulc + ypos_offset + (height - (data[i][j].y * ypos_multiplier));
+            ofDrawCircle(x1, y1, circle_radius);
+            if(j == 0) continue;
+            ofSetColor(graph_color * 0.7);
+            if(alpha == NAN || beta == NAN || gamma == NAN) continue;
+            float gamma_correction = 1.0;
+            float curve_x0 = data[i][j-1].x;
+            float curve_y0 = alpha + beta * (pow(curve_x0, gamma))*gamma_correction;
+//            float curve_y0 = alpha + beta * (1 - exp(-gamma*curve_x0));
+//            float curve_y0 = -log(1-(data[i][j-1].y-alpha)/beta)*gamma_correction;
+            
+            float curve_x1 = data[i][j].x;
+            float curve_y1 = alpha + beta * (pow(curve_x1, gamma))*gamma_correction;
+//            float curve_y1 = alpha + beta * (1 - exp(-gamma*curve_x1));
+//            float curve_y1 = -log(1-(data[i][j].y-alpha)/beta)*gamma_correction;
+            float x0 = xulc + xpos_offset + (curve_x0 * xpos_multiplier);
+            float y0 = yulc + ypos_offset + (height - (curve_y0 * ypos_multiplier));
+//            float y0 = yulc + ypos_offset + (height - (data[i][j-1].y * ypos_multiplier));
+            x1 = xulc + xpos_offset + (curve_x1 * xpos_multiplier);
+            y1 = yulc + ypos_offset + (height - (curve_y1 * ypos_multiplier));
+            ofSetLineWidth(2.0);
+            if(x0 < x1) ofDrawLine(x0, y0, x1, y1);
+            
+        }
+    }
+//    ofSetLineWidth(line_width);
+//    for(int i=1; i<data.size(); i++) {
+//        for(int j=0; j<data[i].size(); j++) {
+//            float x0 = xulc + xpos_offset + (data[i][j-1].x * xpos_multiplier);
+//            float y0 = yulc + ypos_offset + (height - (data[i][j-1].y * ypos_multiplier));
+//            float x1 = xulc + xpos_offset + (data[i][j].x * xpos_multiplier);
+//            float y1 = yulc + ypos_offset + (height - (data[i][j].y * ypos_multiplier));
+//            ofDrawLine(x0, y0, x1, y1);
+//        }
+//    }
+
+//    switch(type) {
+//        case PLOT3D_SCATTER:
+//            for(int i=0; i<data.size(); i++) {
+//                for(int j=0; j<data[i].size(); j++) {
+//                    float x1 = xulc + xpos_offset + (data[i][j].x * xpos_multiplier);
+//                    float y1 = yulc + ypos_offset + (height - (data[i][j].y * ypos_multiplier));
+//                    ofDrawCircle(x1, y1, circle_radius);
+//                }
+//            }
+//            break;
+//        case PLOT3D_LINE:
+//            ofSetLineWidth(line_width);
+//            for(int i=1; i<data.size(); i++) {
+//                for(int j=0; j<data[i].size(); j++) {
+//                    float x0 = xulc + xpos_offset + (data[i][j-1].x * xpos_multiplier);
+//                    float y0 = yulc + ypos_offset + (height - (data[i][j-1].y * ypos_multiplier));
+//                    float x1 = xulc + xpos_offset + (data[i][j].x * xpos_multiplier);
+//                    float y1 = yulc + ypos_offset + (height - (data[i][j].y * ypos_multiplier));
+//                    ofDrawLine(x0, y0, x1, y1);
+//                }
+//            }
+//            break;
+//        default:
+//            break;
+//    }
+    
+}
+
+void ViewGraph3D::getUnitLines(std::vector<float> * unit_values, int * precision, float min, float max) {
+    float range = max - min;
+    float decade = pow(10, floor(log10(range)));
+    //    cout << "decade=" << decade << endl;
+    float unit = decade / 10;
+    //    cout << "unit=" << unit << endl;
+    float unit_lines = floor(range/unit);
+    //    cout << "unit_lines=" << unit_lines << endl;
+    
+    float unit_multiplier = 1;
+    if(unit_lines > 20) unit_multiplier *= 5;
+    float unit_interval = unit * unit_multiplier;
+    //    cout << "unit_interval=" << unit_interval << endl;
+    
+    //    cout << "float_precision=" << ceil(log10(1/unit_interval)) << endl;
+    * precision = ceil(log10(1/unit_interval)); // <--- check if this works for a range of different values
+    
+    int unit_line_start = 0;
+    
+    //    cout << "got this far" << endl;
+    
+    for(float i=0; i<max;i+=unit_interval) {
+        if(i >= min && i<=max) unit_values->push_back(i);
+    }
+    for(float i=0; i>min;i-=unit_interval) {
+        if(i >= min && i<=max) unit_values->push_back(i);
+    }
+    for(int i=0; i<unit_values->size(); i++) {
+        if(*precision > 0) cout << fixed << setprecision(*precision);
+        else cout << fixed << setprecision(0);
+        cout << unit_values->at(i) << "\t";
+    }
+    cout << endl;
+}
 

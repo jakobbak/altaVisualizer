@@ -41,13 +41,13 @@ char * gdbMemoryDump::setArmHomePosition(char * byte_ptr) {
 
 
 char * gdbMemoryDump::setArmClockwiseExtent(char * byte_ptr) {
-    memory.config.arm_clockwise_extent = * byte_ptr;
+    memory.config.arm_clockwise_extent = * ((float *) byte_ptr);
     return byte_ptr + sizeof(memory.config.arm_clockwise_extent);
 }
 
 
 char * gdbMemoryDump::setArmAntiClockwiseExtent(char * byte_ptr) {
-    memory.config.arm_anti_clockwise_extent = * byte_ptr;
+    memory.config.arm_anti_clockwise_extent = * ((float *) byte_ptr);
     return byte_ptr + sizeof(memory.config.arm_anti_clockwise_extent);
 }
 
@@ -72,6 +72,8 @@ void gdbMemoryDump::printConfigWithSignature() {
     cout << "ARM home position is " << memory.config.arm_home_position << endl;
     cout << "ARM clockwise extent is " << memory.config.arm_clockwise_extent << endl;
     cout << "ARM anti clockwise extent is " << memory.config.arm_anti_clockwise_extent << endl;
+    cout << endl;
+
 }
 
 
@@ -91,17 +93,28 @@ char * gdbMemoryDump::loadPhaserPermastoreData(char * byte_ptr) {
     memcpy(&memory.phase_reference, data_ptr, sizeof(memory.phase_reference));
     cout << "Loaded PHASE_REFERENCE from permastore dump. Size is " << dec
          << sizeof(memory.phase_reference) << " bytes" << endl;
+    cout << endl;
+
     
-    return data_ptr + sizeof(memory.axis_table);
+    return data_ptr + sizeof(memory.phase_reference);
 }
 
 
 char * gdbMemoryDump::loadEcmPermastoreData(char * byte_ptr) {
-    memcpy(&memory.models, byte_ptr, sizeof(memory.models));
+    char * data_ptr = byte_ptr;
+    memcpy(&memory.models, data_ptr, sizeof(memory.models));
+    data_ptr = data_ptr + sizeof(memory.models);
     cout << "Loaded MODELS from permastore dump. Size is " << dec
          << sizeof(memory.models) << " bytes" << endl;
-    
-    return byte_ptr + sizeof(memory.models);
+    cout << endl;
+
+    memcpy(&memory.models3D, data_ptr, sizeof(memory.models3D));
+    data_ptr = data_ptr + sizeof(memory.models3D);
+    cout << "Loaded SAMPLES3D from permastore dump. Size is " << dec
+    << sizeof(memory.models3D) << " bytes" << endl;
+    cout << endl;
+
+    return data_ptr;
 }
 
 

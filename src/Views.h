@@ -22,7 +22,10 @@ enum plot2D_type {
     PLOT2D_LINE = 1
 };
 
-
+enum plot3D_type {
+    PLOT3D_SCATTER = 0,
+    PLOT3D_LINE = 1
+};
 
 
 class plotColors {
@@ -34,7 +37,10 @@ public:
         colors.push_back(ofColor(0, 255, 255)); // CYAN
         colors.push_back(ofColor(255, 0, 255)); // MAGENTA
         colors.push_back(ofColor(255, 255, 0)); // YELLOW
-        colors.push_back(ofColor(0, 0, 255));   // BLUE
+        colors.push_back(ofColor(128, 128, 255)); // LIGHT BLUE
+        colors.push_back(ofColor(255, 128, 128)); // PINK
+        colors.push_back(ofColor(128, 255, 128)); // LIGHT GREEN
+        colors.push_back(ofColor(255, 192, 0));   // ORANGE
     }
     ~plotColors(){}
     
@@ -147,6 +153,7 @@ class ViewGraph2D : public View {
         int text_font_size;
         string text_font_name;
         bool text_using_ttf;
+        float alpha, beta, bias;
     } graph2D_config_t;
     
     public:
@@ -214,6 +221,60 @@ private:
     vector<vector<ofVec2f>> graph;
     RealtimeGraph2D_config_t realtime_plotter_config;
     plotColors pallette;
+    
+};
+
+
+class ViewGraph3D : public View {
+    
+    typedef struct {
+        float xmin;
+        float xmax;
+        float xrange;
+        float ymin;
+        float ymax;
+        float yrange;
+        float zmin;
+        float zmax;
+        float zrange;
+        plot3D_type type;
+        ofColor graph_color;
+        ofColor axis_color;
+        float circle_radius;
+        float line_width;
+        std::vector<float> x_unit_values;
+        std::vector<float> y_unit_values;
+        std::vector<float> z_unit_values;
+        int xprecision;
+        int yprecision;
+        int zprecision;
+        ofTrueTypeFont text_font;
+        int text_font_size;
+        string text_font_name;
+        bool text_using_ttf;
+        vector<ofVec3f> curveFittingParameters;
+        float alpha, beta, gamma;
+    } graph3D_config_t;
+    
+public:
+    ViewGraph3D() {}
+    ViewGraph3D(ofVec2f upperLeftCorner, ofVec2f size, std::vector<vector<ofVec3f>> dataSet, plot3D_type type, string title = "[NO TITLE]");
+    ~ViewGraph3D(){}
+    
+    void draw();
+    void updateDataSet(std::vector<vector<ofVec3f>> dataSet);
+    void updateCurveFittingParameters(vector<ofVec3f> parameters) { graph3D_config.curveFittingParameters = parameters; }
+    void changeGraphColor(ofColor color) { graph3D_config.graph_color = color; }
+    void changeAxisColor(ofColor color) { graph3D_config.axis_color = color; }
+    void changeLineWidth(float width) { graph3D_config.line_width = width; }
+    void changeCircleRadius(float radius) { graph3D_config.circle_radius = radius; }
+    
+    void getUnitLines(std::vector<float> * unit_values, int * precision, float min, float max);
+    
+    
+private:
+    std::vector<vector<ofVec3f>> data;
+    graph3D_config_t graph3D_config;
     
 };
 

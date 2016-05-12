@@ -55,7 +55,9 @@ class gdbMemoryDump {
     #define BUCKETS_PER_ROTATION 256
         
     #define SAMPLE_BUCKETS 120
-        
+    #define SAMPLE_ITERATIONS 9
+
+    
         
         // FOR RUNTIME
         typedef struct {
@@ -71,7 +73,7 @@ class gdbMemoryDump {
         
         // FOR ECM
         typedef struct {
-            float offset, acceleration;
+            float offset, acceleration, velocity;
         } sample_t;
         
         typedef struct {
@@ -89,8 +91,21 @@ class gdbMemoryDump {
             float alpha, beta, bias;
             bool stable;
         } ecm_model_t;
+    
+        // FOR ALTERNATIVE ECM ROUTINE
+        typedef struct {
+            // float offset, acceleration;
+            float x, y, z;
+        } sample3D_t;
         
-        
+        typedef struct {
+            sample3D_t samples3D[SAMPLE_ITERATIONS][SAMPLE_BUCKETS];
+            int sample_counter[SAMPLE_ITERATIONS];
+            float alpha[SAMPLE_ITERATIONS];
+            float beta[SAMPLE_ITERATIONS];
+            float gamma[SAMPLE_ITERATIONS];
+        } ecm_model3D_t;
+            
         // FOR USE IN THIS APPLICATION
         typedef struct {
             uint32_t permastore_signature; // 4 bytes
@@ -98,6 +113,7 @@ class gdbMemoryDump {
             axis_table_t axis_table[NUMBER_OF_ANGULAR_AXES];
             float phase_reference[NUMBER_OF_ANGULAR_AXES][MAX_REFERENCE_POINTS_PER_REVOLUTION];
             ecm_model_t models[NUMBER_OF_ANGULAR_AXES];
+            ecm_model3D_t models3D[2];
         } memory_dump_t;
         
         memory_dump_t memory;

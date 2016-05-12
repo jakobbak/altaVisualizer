@@ -60,7 +60,7 @@ void AltaSerial::parseSerial(string line) {
         vector<string> debug_msg = ofSplitString(line, "@");
         int debugID = getDebugMessageType(debug_msg[0]);
         switch(debugID) {
-            case 0:
+            case 1:
             {
                 vector<string> runtime_value = ofSplitString(debug_msg[1], " ");
 //                for(int i=0; i < runtime_value.size(); i++) {
@@ -77,19 +77,38 @@ void AltaSerial::parseSerial(string line) {
 //                cout << label << "=" << defaultfloat << setprecision(5) << value << endl;
             }
                 break;
-            case 1:
+            case 2:
+            {
+                vector<string> runtime_value = ofSplitString(debug_msg[1], " ");
+                //                for(int i=0; i < runtime_value.size(); i++) {
+                //                    cout << "[" << i << "]" << runtime_value[i] << endl;
+                //                }
+                string label = runtime_value[0];
+                float value;
+                try {
+                    value = stof(runtime_value[1]);
+                } catch (invalid_argument ia) {
+                    break;
+                }
+//                realtime_plotter->addDataPoint(label, value);
+                //                cout << label << "=" << defaultfloat << setprecision(5) << value << endl;
+            }
                 break;
             default:
                 break;
         }
         
     } else {
+//        cout << setprecision(4) << defaultfloat;
+//        cout << defaultfloat << setprecision(9);
         cout << line << endl;
+//        cout << 0.123456789 << endl;
     }
 }
 
 int AltaSerial::getDebugMessageType(string debugID) {
-    if(debugID == "_DEBUG_") return 0;
+    if(debugID == "_DEBUG_") return 1;
+    else if(debugID == "_DEBUG_P") return 2;
     else return 0;
 }
 
