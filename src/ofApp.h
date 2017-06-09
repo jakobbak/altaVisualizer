@@ -12,7 +12,7 @@ class ofApp : public ofBaseApp{
         void copyDumpDataToOfVec2fVectors();
         void getRuntimeConfigAsString();
         void setupViews();
-    
+        void updatePrinterStatus();
 		void keyPressed(int key);
 		void keyReleased(int key);
 		void mouseMoved(int x, int y );
@@ -26,3 +26,12 @@ class ofApp : public ofBaseApp{
 		void gotMessage(ofMessage msg);
     
 };
+
+
+typedef struct {
+    float alive;
+    float hotend;
+    float setpoint;
+    int node_buffer;
+    // int mode, etc....
+} printer_t;

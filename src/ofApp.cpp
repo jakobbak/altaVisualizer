@@ -18,9 +18,14 @@ vector<ofVec3f> data_platter_ecm;
 vector<ofVec3f> data_psamples_ecm;
 vector<vector<ofVec3f>> data_asamples3D_ecm;
 vector<vector<ofVec3f>> data_psamples3D_ecm;
+vector<vector<ofVec3f>> data_pacc_vel_ecm;
 vector<ofVec3f> data_trend_arm_ecm;
 vector<ofVec3f> data_trend_platter_ecm;
 string runtime_config_info;
+string temperature_string;
+string node_buffer_string;
+printer_t printer;
+vector<ofVec4f> dump_for_simen;
 
 ViewGraph2D view_arm_phase_reference;
 ViewGraph2D view_platter_phase_reference;
@@ -28,16 +33,20 @@ ViewGraph2D view_arm_axis_table_nominals;
 ViewGraph2D view_platter_axis_table_nominals;
 ViewGraph3D view_arm_ecm;
 ViewGraph3D view_platter_ecm;
+ViewGraph3D view_pacc_vel_ecm;
 ViewRealtimePlotter2D view_realtime_plotter;
 
 ViewTextBox view_config_info;
+ViewTextBox view_temperature;
+ViewTextBox view_node_buffer;
 
 AltaSerial alta;
 
+bool table_nominals_compare_to_ideal_positions = true;
 bool phase_reference_compare_to_ideal_positions = true;
 
+int table_nominals_points_to_compare = 256;
 int phase_reference_points_to_compare = 50;
-
 
 
 //--------------------------------------------------------------
@@ -49,22 +58,29 @@ void ofApp::setup(){
     copyDumpDataToOfVec2fVectors();
     getRuntimeConfigAsString();
     
+    temperature_string = "273.1 / 273.1";
+    node_buffer_string = "56789";
+
     setupViews();
     
     alta.addRealtimePlotter(&view_realtime_plotter);
+    alta.addPrinter(&printer);
     alta.init();
     alta.startThread();
-    
 }
 
 
 //--------------------------------------------------------------
 void ofApp::update(){
+    updatePrinterStatus();
 }
 
 
 //--------------------------------------------------------------
 void ofApp::draw(){
+    printer.alive *= 1.05;
+    if(printer.alive >= 1.0) printer.alive = 1.0;
+    ofBackground(int(printer.alive * 0x80), 0, 0);
 
     view_arm_phase_reference.draw();
     view_platter_phase_reference.draw();
@@ -72,8 +88,11 @@ void ofApp::draw(){
     view_platter_axis_table_nominals.draw();
 //    view_arm_ecm.draw();
     view_platter_ecm.draw();
-    view_config_info.draw();
+    view_pacc_vel_ecm.draw();
     view_realtime_plotter.draw();
+    view_config_info.draw();
+    view_temperature.draw();
+    view_node_buffer.draw();
 }
 
 
@@ -84,10 +103,20 @@ void ofApp::setupViews(){
     view_platter_axis_table_nominals = ViewGraph2D(ofVec2f(1280,20), ofVec2f(400, 400), data_platter_axis_table_nominals, PLOT2D_LINE, "PLATTER AXIS TABLE NOMINALS");
 //    view_arm_ecm = ViewGraph3D(ofVec2f(20,440), ofVec2f(820,400), data_asamples3D_ecm, PLOT3D_SCATTER, "ARM ECM");
 //    view_platter_ecm = ViewGraph3D(ofVec2f(860,440), ofVec2f(820,400), data_platter_ecm, PLOT3D_SCATTER, "PLATTER ECM");
-    view_platter_ecm = ViewGraph3D(ofVec2f(860,440), ofVec2f(820,400), data_psamples3D_ecm, PLOT3D_SCATTER, "PSAMPLES ECM");
+//    view_platter_ecm = ViewGraph3D(ofVec2f(860,440), ofVec2f(820,400), data_psamples3D_ecm, PLOT3D_SCATTER, "PSAMPLES ECM");
+    view_platter_ecm = ViewGraph3D(ofVec2f(20,440), ofVec2f(820,400), data_psamples3D_ecm, PLOT3D_SCATTER, "PSAMPLES ECM");
+    view_pacc_vel_ecm = ViewGraph3D(ofVec2f(860,440), ofVec2f(820,400), data_pacc_vel_ecm, PLOT3D_SCATTER, "PSAMPLES ECM");
 
     view_realtime_plotter = ViewRealtimePlotter2D(ofVec2f(20, 860), ofVec2f(1660, 400), "REALTIME LOGGING");
     view_config_info = ViewTextBox(ofVec2f(20,1280), ofVec2f(400,120), runtime_config_info);
+    
+    view_temperature = ViewTextBox(ofVec2f(440,1280), ofVec2f(400,120), temperature_string);
+    view_temperature.changeTitle("TEMPERATURE");
+    view_temperature.changeFontSize(48);
+
+    view_node_buffer = ViewTextBox(ofVec2f(860,1280), ofVec2f(140,120), node_buffer_string);
+    view_node_buffer.changeTitle("BUFFER");
+    view_node_buffer.changeFontSize(48);
     
     view_arm_phase_reference.changeGraphColor(ofColor(255,0,0));
     view_platter_phase_reference.changeGraphColor(ofColor(255,0,0));
@@ -98,6 +127,7 @@ void ofApp::setupViews(){
     
 //    view_arm_ecm.changeCircleRadius(2);
     view_platter_ecm.changeCircleRadius(2);
+    view_pacc_vel_ecm.changeCircleRadius(2);
     view_realtime_plotter.setGraphsCentered(true);
     
     view_platter_ecm.updateCurveFittingParameters(data_trend_platter_ecm);
@@ -109,17 +139,49 @@ void ofApp::setupViews(){
 void ofApp::copyDumpDataToOfVec2fVectors() {
     
     // making a copy of Axis Tables Nominals for the ARM that we can pass to the visualisation
-    int size_arm_axis_table_nominals = sizeof(dump.memory.axis_table[0].nominals)/sizeof(dump.memory.axis_table[0].nominals[0]);
+    int size_arm_axis_table_nominals = table_nominals_points_to_compare;
+
+//    int size_arm_axis_table_nominals = sizeof(dump.memory.axis_table[0].nominals)/sizeof(dump.memory.axis_table[0].nominals[0]);
     float * ptr_arm_axis_table_nominals = dump.memory.axis_table[0].nominals;
     for(int i=0; i < size_arm_axis_table_nominals; i++) {
-        data_arm_axis_table_nominals.push_back(ofVec2f(i, ptr_arm_axis_table_nominals[i]));
+        if(table_nominals_compare_to_ideal_positions) {
+            static int index_offset = 0;
+            // below is for checking whether the values actually differentiate in respect to ideal positions
+            float atn = ptr_arm_axis_table_nominals[i];
+            float ideal_position = (M_PI * 2 * (float)i / table_nominals_points_to_compare);
+            if(i >= table_nominals_points_to_compare) ideal_position = 0;
+            float filtered_value = atn - ideal_position;
+//            if(filtered_value > 0.5) filtered_value = 0;
+            if(filtered_value > M_PI) filtered_value -= M_PI * 2;
+            if(filtered_value < -M_PI) filtered_value += M_PI * 2;
+            // cout << "apr=" << apr << "\t ip=" << ideal_position << "\t fv=" << filtered_value << endl;
+            data_arm_axis_table_nominals.push_back(ofVec2f(i, filtered_value));
+        } else {
+            data_arm_axis_table_nominals.push_back(ofVec2f(i, ptr_arm_axis_table_nominals[i]));
+        }
     }
     
     // making a copy of Axis Tables Nominals for the PLATTER that we can pass to the visualisation
-    int size_platter_axis_table_nominals = sizeof(dump.memory.axis_table[1].nominals)/sizeof(dump.memory.axis_table[1].nominals[0]);
+    int size_platter_axis_table_nominals = table_nominals_points_to_compare;
+
+    //    int size_platter_axis_table_nominals = sizeof(dump.memory.axis_table[1].nominals)/sizeof(dump.memory.axis_table[1].nominals[0]);
     float * ptr_platter_axis_table_nominals = dump.memory.axis_table[1].nominals;
     for(int i=0; i < size_platter_axis_table_nominals; i++) {
-        data_platter_axis_table_nominals.push_back(ofVec2f(i, ptr_platter_axis_table_nominals[i]));
+        if(table_nominals_compare_to_ideal_positions) {
+            static int index_offset = 0;
+            // below is for checking whether the values actually differentiate in respect to ideal positions
+            float ptn = ptr_platter_axis_table_nominals[i];
+            float ideal_position = (M_PI * 2 * (float)i / size_platter_axis_table_nominals);
+            if(i >= size_platter_axis_table_nominals) ideal_position = 0;
+            float filtered_value = ptn - ideal_position;
+//            if(filtered_value > 0.5) filtered_value = 0;
+            if(filtered_value > M_PI) filtered_value -= M_PI * 2;
+            if(filtered_value < -M_PI) filtered_value += M_PI * 2;
+            // cout << "apr=" << apr << "\t ip=" << ideal_position << "\t fv=" << filtered_value << endl;
+            data_platter_axis_table_nominals.push_back(ofVec2f(i, filtered_value));
+        } else {
+            data_platter_axis_table_nominals.push_back(ofVec2f(i, ptr_platter_axis_table_nominals[i]));
+        }
     }
     
     
@@ -135,6 +197,8 @@ void ofApp::copyDumpDataToOfVec2fVectors() {
             float ideal_position = (M_PI * 2 * (float)i / phase_reference_points_to_compare);
             if(i >= phase_reference_points_to_compare) ideal_position = 0;
             float filtered_value = apr - ideal_position;
+            if(filtered_value > M_PI) filtered_value -= M_PI * 2;
+            if(filtered_value < -M_PI) filtered_value += M_PI * 2;
 //            if(i == 0 && filtered_value > 1 ) filtered_value = 0;
             // cout << "apr=" << apr << "\t ip=" << ideal_position << "\t fv=" << filtered_value << endl;
             data_arm_phase_reference.push_back(ofVec2f(i, filtered_value));
@@ -151,10 +215,12 @@ void ofApp::copyDumpDataToOfVec2fVectors() {
         if(phase_reference_compare_to_ideal_positions) {
             // below is for checking whether the values actually differentiate in respect to ideal positions
             float apr = ptr_platter_phase_reference[i];
-            if(i == 0) apr = 0;
+//            if(i == 0) apr = 0;
             float ideal_position = (M_PI * 2 * (float)i / phase_reference_points_to_compare);
             if(i >= phase_reference_points_to_compare) ideal_position = 0;
             float filtered_value = apr - ideal_position;
+            if(filtered_value > M_PI) filtered_value -= M_PI * 2;
+            if(filtered_value < -M_PI) filtered_value += M_PI * 2;
             //                cout << "apr=" << apr << "\t ip=" << ideal_position << "\t fv=" << filtered_value << endl;
             data_platter_phase_reference.push_back(ofVec2f(i, filtered_value));
         } else {
@@ -163,7 +229,7 @@ void ofApp::copyDumpDataToOfVec2fVectors() {
     }
     
     // making a copy of ECM Samples for the ARM that we can pass to the visualisation
-    gdbMemoryDump::sample_t * ptr_arm_ecm = dump.memory.models[0].samples;
+    gdbMemoryDump::ecm_sample_t * ptr_arm_ecm = dump.memory.models[0].samples;
     int size_arm_ecm = sizeof(dump.memory.models[0].samples)/sizeof(dump.memory.models[0].samples[0]);
     int nan_counter = 0;
     for(int i=0; i< size_arm_ecm; i++) {
@@ -187,7 +253,7 @@ void ofApp::copyDumpDataToOfVec2fVectors() {
     
     
     // making a copy of ECM Samples for the PLATTER that we can pass to the visualisation
-    gdbMemoryDump::sample_t * ptr_platter_ecm = dump.memory.models[1].samples;
+    gdbMemoryDump::ecm_sample_t * ptr_platter_ecm = dump.memory.models[1].samples;
     int size_platter_ecm = sizeof(dump.memory.models[1].samples)/sizeof(dump.memory.models[1].samples[0]);
     nan_counter = 0;
     for(int i=0; i< size_platter_ecm; i++) {
@@ -211,53 +277,80 @@ void ofApp::copyDumpDataToOfVec2fVectors() {
     cout << endl;
 
     
-    // making a copy of alternative ECM Samples for the PLATTER that we can pass to the visualisation
-    bool ecm_print_values = false;
-    int axis = 1;
-    for(int iteration=0; iteration < SAMPLE_ITERATIONS; iteration++) {
+    // making a copy of GRAPHER Samples for the PLATTER that we can pass to the visualisation
+    bool grapher_values = false;
+    int axis = 0;
+    for(int iteration=0; iteration < ITERATIONS; iteration++) {
         data_psamples3D_ecm.push_back(vector<ofVec3f>{});
-        gdbMemoryDump::ecm_model3D_t * ptr_pmodel_ecm = &dump.memory.models3D[axis];
-        gdbMemoryDump::sample3D_t * ptr_psamples = ptr_pmodel_ecm->samples3D[iteration];
-        int size_psamples_ecm = sizeof(dump.memory.models3D[axis].samples3D[iteration])/sizeof(dump.memory.models3D[axis].samples3D[iteration][0]);
+        data_pacc_vel_ecm.push_back(vector<ofVec3f>{});
+        gdbMemoryDump::grapher_t * ptr_pgrapher = &dump.memory.grapher[axis];
+        gdbMemoryDump::sample_t * ptr_psamples = ptr_pgrapher->samples[iteration];
+        int size_psamples = sizeof(dump.memory.grapher[axis].samples[iteration])/sizeof(dump.memory.grapher[axis].samples[iteration][0]);
         nan_counter = 0;
-        for(int cnt=0; cnt< size_psamples_ecm; cnt++) {
-    //        dump.printDataBytesAsFloats(&ptr_psamples_ecm[i], 8);
+        float velocity_smoothing_factor = 0.0;
+        for(int cnt=0; cnt< size_psamples; cnt++) {
+    //        dump.printDataBytesAsFloats(&ptr_psamples[i], 8);
+            static float t0, v0, a;
             float x = ptr_psamples[cnt].x;
             float y = ptr_psamples[cnt].y;
             float z = ptr_psamples[cnt].z;
+            float t = x;
+            static float v;
+            if(t <= t0) {
+                v = y;
+            } else {
+                v = v * velocity_smoothing_factor + y * (1 - velocity_smoothing_factor);
+            }
             if(isnan(x) || isnan(y) || isnan(z)) { // check if any are NaN, meaning they were not set in the flash sector.
                 //            data_platter_ecm.push_back(ofVec2f(i, i));
                 nan_counter++;
-            }
-            else data_psamples3D_ecm[iteration].push_back(ofVec3f(x, y, z)); // <--- THIS IS THE LINE WE SHOULD USE INSTEAD OF BELOW
+            } else {
+                data_psamples3D_ecm[iteration].push_back(ofVec3f(t, v, z)); // <--- THIS IS THE LINE WE SHOULD USE INSTEAD OF BELOW
             //        else data_platter_ecm.push_back(ofVec2f(i - size_platter_ecm/2 - 40, i - size_platter_ecm/2 - 10));  // JUST FOR TESTING. DELETE WHEN WE GOT WORKING DATA
+                if(cnt > 0) {
+                    a = (v - v0) / (t - t0);
+                }
+                t0 = t;
+                v0 = v;
+                data_pacc_vel_ecm[iteration].push_back(ofVec3f(v, a, z));
+                if(isnan(a) == false) {
+                    dump_for_simen.push_back(ofVec4f(z,t,v,a));
+                }
+            }
         }
         data_trend_platter_ecm.push_back(ofVec3f());
-        data_trend_platter_ecm[iteration].x = ptr_pmodel_ecm->alpha[iteration];
-        data_trend_platter_ecm[iteration].y = ptr_pmodel_ecm->beta[iteration];
-        data_trend_platter_ecm[iteration].z = ptr_pmodel_ecm->gamma[iteration];
-        cout << "PSAMPLES[" << iteration << "] has " << dec << size_psamples_ecm << " samples. " << dec << nan_counter << " of them are NaN" << endl;
+        data_trend_platter_ecm[iteration].x = ptr_pgrapher->alpha[iteration];
+        data_trend_platter_ecm[iteration].y = ptr_pgrapher->beta[iteration];
+        data_trend_platter_ecm[iteration].z = ptr_pgrapher->gamma[iteration];
+        cout << "PSAMPLES[" << iteration << "] has " << dec << size_psamples << " samples. " << dec << nan_counter << " of them are NaN" << endl;
         cout << endl;
-        if(ecm_print_values) {
+        if(grapher_values) {
             cout << "X - COORDINATES" << endl;
-            for(int i=0; i < size_psamples_ecm; i++) {
+            for(int i=0; i < size_psamples; i++) {
                 cout << fixed << setprecision(4) << ptr_psamples[i].x << endl;
             }
             cout << "Y - COORDINATES" << endl;
-            for(int i=0; i < size_psamples_ecm; i++) {
+            for(int i=0; i < size_psamples; i++) {
                 cout << fixed << setprecision(4) << ptr_psamples[i].y << endl;
             }
             cout << endl;
             cout << "Z - COORDINATES" << endl;
-            for(int i=0; i < size_psamples_ecm; i++) {
+            for(int i=0; i < size_psamples; i++) {
                 cout << fixed << setprecision(4) << ptr_psamples[i].z << endl;
             }
             cout << endl;
         }
     }
-    
-        
-
+    if(true) {
+        for(int i=0; i < dump_for_simen.size(); i++) {
+            cout << "[" << fixed << setprecision(8) << dump_for_simen[i].x << ","
+                        << fixed << setprecision(8) << dump_for_simen[i].y << ","
+                        << fixed << setprecision(8) << dump_for_simen[i].z << ","
+                        << fixed << setprecision(8) << dump_for_simen[i].w << "],"
+                        << endl;
+        }
+    }
+//    cout << defaultfloat << endl;
 }
 
 
@@ -279,7 +372,13 @@ void ofApp::getRuntimeConfigAsString() {
 }
 
 
-
+void ofApp::updatePrinterStatus() {
+    char temp_string[16];
+    sprintf(temp_string, "%.1f / %.1f", printer.hotend, printer.setpoint);
+    temperature_string = temp_string;
+    view_temperature.changeText(temperature_string);
+    view_node_buffer.changeText(to_string(printer.node_buffer));
+}
 
 //--------------------------------------------------------------
 void ofApp::keyPressed(int key){

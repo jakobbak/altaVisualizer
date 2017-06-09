@@ -54,8 +54,12 @@ class gdbMemoryDump {
     #define MAX_REFERENCE_POINTS_PER_REVOLUTION 400
     #define BUCKETS_PER_ROTATION 256
         
-    #define SAMPLE_BUCKETS 120
-    #define SAMPLE_ITERATIONS 9
+    #define SAMPLE_BUCKETS 8
+
+    #define NUMBER_OF_GRAPH_AXES 1
+    #define ITERATIONS 1
+    #define SAMPLES_PER_ITERATION 4000
+
 
     
         
@@ -74,7 +78,7 @@ class gdbMemoryDump {
         // FOR ECM
         typedef struct {
             float offset, acceleration, velocity;
-        } sample_t;
+        } ecm_sample_t;
         
         typedef struct {
             float offset_max;
@@ -85,7 +89,7 @@ class gdbMemoryDump {
         } raw_t;
         
         typedef struct {
-            sample_t samples[SAMPLE_BUCKETS];
+            ecm_sample_t samples[SAMPLE_BUCKETS];
             raw_t raw;
             uint8_t raw_sample_counter;
             float alpha, beta, bias;
@@ -96,15 +100,18 @@ class gdbMemoryDump {
         typedef struct {
             // float offset, acceleration;
             float x, y, z;
-        } sample3D_t;
+        } sample_t;
         
         typedef struct {
-            sample3D_t samples3D[SAMPLE_ITERATIONS][SAMPLE_BUCKETS];
-            int sample_counter[SAMPLE_ITERATIONS];
-            float alpha[SAMPLE_ITERATIONS];
-            float beta[SAMPLE_ITERATIONS];
-            float gamma[SAMPLE_ITERATIONS];
-        } ecm_model3D_t;
+            sample_t samples[ITERATIONS][SAMPLES_PER_ITERATION];
+            int sample_counter[ITERATIONS];
+            float alpha[ITERATIONS];
+            float beta[ITERATIONS];
+            float gamma[ITERATIONS];
+            bool sampling[ITERATIONS];
+            float offset[ITERATIONS];
+            int current_iteration;
+        } grapher_t;
             
         // FOR USE IN THIS APPLICATION
         typedef struct {
@@ -112,8 +119,9 @@ class gdbMemoryDump {
             runtime_config_t config; // 16 bytes
             axis_table_t axis_table[NUMBER_OF_ANGULAR_AXES];
             float phase_reference[NUMBER_OF_ANGULAR_AXES][MAX_REFERENCE_POINTS_PER_REVOLUTION];
+            float phase_reference_bias[NUMBER_OF_ANGULAR_AXES];
             ecm_model_t models[NUMBER_OF_ANGULAR_AXES];
-            ecm_model3D_t models3D[2];
+            grapher_t grapher[NUMBER_OF_GRAPH_AXES];
         } memory_dump_t;
         
         memory_dump_t memory;

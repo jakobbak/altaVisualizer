@@ -123,6 +123,7 @@ public:
 
     void draw();
     void changeText(string text) { textBox_config.text = text; }
+    void changeFontSize(int size);
 
 private:
     textBox_config_t textBox_config;
@@ -275,6 +276,7 @@ public:
 private:
     std::vector<vector<ofVec3f>> data;
     graph3D_config_t graph3D_config;
+    plotColors pallette;
     
 };
 

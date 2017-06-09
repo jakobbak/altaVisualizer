@@ -356,6 +356,7 @@
 				LIBRARY_SEARCH_PATHS = "$(inherited)";
 				PRODUCT_BUNDLE_IDENTIFIER = cc.openFrameworks.ofapp;
 				PRODUCT_NAME = altaVisualizerDebug;
+				SDKROOT = macosx10.12;
 				WRAPPER_EXTENSION = app;
 			};
 			name = Debug;
@@ -385,6 +386,7 @@
 				LIBRARY_SEARCH_PATHS = "$(inherited)";
 				PRODUCT_BUNDLE_IDENTIFIER = cc.openFrameworks.ofapp;
 				PRODUCT_NAME = altaVisualizerDebug;
+				SDKROOT = macosx10.12;
 				WRAPPER_EXTENSION = app;
 				baseConfigurationReference = E4EB6923138AFD0F00A09F29;
 			};

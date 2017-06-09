@@ -67,7 +67,13 @@ ViewTextBox::ViewTextBox(ofVec2f upperLeftCorner, ofVec2f size, string text, str
     textBox_config.text_font_name = view_config.font_name;
     textBox_config.text_font_size = view_config.font_size;
     textBox_config.text_using_ttf = textBox_config.text_font.load(textBox_config.text_font_name, textBox_config.text_font_size);
-    
+}
+
+
+void ViewTextBox::changeFontSize(int size)
+{
+    textBox_config.text_font_size = size;
+    textBox_config.text_using_ttf = textBox_config.text_font.load(textBox_config.text_font_name, textBox_config.text_font_size);
 }
 
 
@@ -95,7 +101,6 @@ void ViewTextBox::draw() {
         font.drawString(text, xulc + text_x, yulc + ttf_height_offset + ttf_title_height_offset + title_margin + text_y);
     }
     else ofDrawBitmapString(text, xulc + text_x, yulc + 10 + text_y);
-
 }
 
 
@@ -530,6 +535,7 @@ ViewGraph3D::ViewGraph3D(ofVec2f upperLeftCorner, ofVec2f size, std::vector<vect
     graph3D_config.text_font_size = view_config.font_size;
     graph3D_config.text_using_ttf = graph3D_config.text_font.load(graph3D_config.text_font_name, graph3D_config.text_font_size);
     
+
     float xmin = data_set[0][0].x;
     float xmax = data_set[0][0].x;
     float ymin = data_set[0][0].y;
@@ -554,6 +560,9 @@ ViewGraph3D::ViewGraph3D(ofVec2f upperLeftCorner, ofVec2f size, std::vector<vect
             //        cout << "y=" << data_point.y << endl;
         }
     }
+//    ymin = -5;  // uncomment to zoom in on what's happening around zero velocity
+//    ymax = 5;  // uncomment to zoom in on what's happening around zero velocity
+
     float xrange = xmax - xmin;
     float yrange = ymax - ymin;
     float zrange = zmax - zmin;
@@ -709,15 +718,27 @@ void ViewGraph3D::draw()
         ofDrawLine(y_axis_x, y_axis_y0, y_axis_x, y_axis_y1);
     }
     
+    pallette = plotColors();
+
     for(int i=0; i<data.size(); i++) {
-        float alpha = graph3D_config.curveFittingParameters[i].x;
-        float beta = graph3D_config.curveFittingParameters[i].y;
-        float gamma = graph3D_config.curveFittingParameters[i].z;
+        float alpha, beta, gamma;
+        if(graph3D_config.curveFittingParameters.size()) {
+            alpha = graph3D_config.curveFittingParameters[i].x;
+            beta = graph3D_config.curveFittingParameters[i].y;
+            gamma = graph3D_config.curveFittingParameters[i].z;
+        } else {
+            alpha = NAN;
+            beta = NAN;
+            gamma = NAN;
+        }
+        graph_color = pallette.getNewColor();
         for(int j=0; j<data[i].size(); j++) {
             ofSetColor(graph_color);
             float x1 = xulc + xpos_offset + (data[i][j].x * xpos_multiplier);
             float y1 = yulc + ypos_offset + (height - (data[i][j].y * ypos_multiplier));
             ofDrawCircle(x1, y1, circle_radius);
+            
+            // here we are drawing the curvefitted lines
             if(j == 0) continue;
             ofSetColor(graph_color * 0.7);
             if(alpha == NAN || beta == NAN || gamma == NAN) continue;

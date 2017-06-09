@@ -86,17 +86,24 @@ void gdbMemoryDump::printSignature() {
 char * gdbMemoryDump::loadPhaserPermastoreData(char * byte_ptr) {
     char * data_ptr = byte_ptr;
     memcpy(&memory.axis_table, data_ptr, sizeof(memory.axis_table));
+    data_ptr = data_ptr + sizeof(memory.axis_table);
     cout << "Loaded AXIS_TABLE from permastore dump. Size is " << dec
          << sizeof(memory.axis_table) << " bytes" << endl;
-    
-    data_ptr = data_ptr + sizeof(memory.axis_table);
+
     memcpy(&memory.phase_reference, data_ptr, sizeof(memory.phase_reference));
+    data_ptr = data_ptr + sizeof(memory.phase_reference);
     cout << "Loaded PHASE_REFERENCE from permastore dump. Size is " << dec
          << sizeof(memory.phase_reference) << " bytes" << endl;
     cout << endl;
+    
+    memcpy(&memory.phase_reference_bias, data_ptr, sizeof(memory.phase_reference_bias));
+    data_ptr = data_ptr + sizeof(memory.phase_reference_bias);
+    cout << "Loaded PHASE_REFERENCE_BIAS from permastore dump. Size is " << dec
+    << sizeof(memory.phase_reference_bias) << " bytes" << endl;
+    cout << endl;
 
     
-    return data_ptr + sizeof(memory.phase_reference);
+    return data_ptr;
 }
 
 
@@ -108,10 +115,10 @@ char * gdbMemoryDump::loadEcmPermastoreData(char * byte_ptr) {
          << sizeof(memory.models) << " bytes" << endl;
     cout << endl;
 
-    memcpy(&memory.models3D, data_ptr, sizeof(memory.models3D));
-    data_ptr = data_ptr + sizeof(memory.models3D);
-    cout << "Loaded SAMPLES3D from permastore dump. Size is " << dec
-    << sizeof(memory.models3D) << " bytes" << endl;
+    memcpy(&memory.grapher, data_ptr, sizeof(memory.grapher));
+    data_ptr = data_ptr + sizeof(memory.grapher);
+    cout << "Loaded GRAPHER from permastore dump. Size is " << dec
+    << sizeof(memory.grapher) << " bytes" << endl;
     cout << endl;
 
     return data_ptr;

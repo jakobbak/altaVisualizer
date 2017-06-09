@@ -21,7 +21,8 @@ public:
     void checkSerial();
     void parseSerial(string line);
     int getDebugMessageType(string debugID);
-    void addRealtimePlotter(ViewRealtimePlotter2D * plotter) { realtime_plotter = plotter; }
+    void addRealtimePlotter(ViewRealtimePlotter2D *plotter) { realtime_plotter = plotter; }
+    void addPrinter(printer_t *printer) { alta_printer = printer; } 
     
     // the thread function
     void threadedFunction() {
@@ -39,6 +40,7 @@ public:
 protected:
     string linebuffer;
     ViewRealtimePlotter2D * realtime_plotter;
+    printer_t *alta_printer;
 
     
 };

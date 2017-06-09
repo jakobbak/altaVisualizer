@@ -6,8 +6,10 @@
 //
 //
 
+#include "string.h"
 #include "ofSerial.h"
 #include "AltaSerial.h"
+#include "ofApp.h"
 
 
 ofSerial serial;
@@ -56,6 +58,7 @@ void AltaSerial::checkSerial() {
 }
 
 void AltaSerial::parseSerial(string line) {
+    alta_printer->alive = 0.001;
     if(ofIsStringInString(line, "_DEBUG")) {
         vector<string> debug_msg = ofSplitString(line, "@");
         int debugID = getDebugMessageType(debug_msg[0]);
@@ -99,10 +102,20 @@ void AltaSerial::parseSerial(string line) {
         }
         
     } else {
+        if(ofIsStringInString(line, "ok T:")) {
+            vector<string> str = ofSplitString(line, ":");
+            vector<string> temp = ofSplitString(str[1], "/");
+            alta_printer->hotend = atof(temp[0].c_str());
+            alta_printer->setpoint = atof(temp[1].c_str());
+        } else if(ofIsStringInString(line, "ok bn:")) {
+            vector<string> nodes = ofSplitString(line, ":");
+            alta_printer->node_buffer = atoi(nodes[1].c_str());
+        } else {
 //        cout << setprecision(4) << defaultfloat;
 //        cout << defaultfloat << setprecision(9);
         cout << line << endl;
 //        cout << 0.123456789 << endl;
+        }
     }
 }
 
