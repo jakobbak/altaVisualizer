@@ -67,6 +67,8 @@ void ofApp::setup(){
     alta.addPrinter(&printer);
     alta.init();
     alta.startThread();
+    
+    printer.alive = 0.001;
 }
 
 
